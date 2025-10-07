@@ -25,27 +25,27 @@ vehicle_data = fetch_data()
 
 if vehicle_data:
     df = pd.DataFrame(vehicle_data)
-    df['lineId'] = df['lineId'].astype(str)
+    df['lineLabel'] = df['lineLabel'].astype(str)
 
     st.header("Liczba pojazdów na linii")
 
     line_counts = df['lineId'].value_counts().reset_index()
-    line_counts.columns = ['lineId', 'count']
+    line_counts.columns = ['lineLabel', 'count']
 
     chart = alt.Chart(line_counts).mark_bar().encode(
-        x=alt.X('lineId:N', title='Numer Linii', sort='-y'),
+        x=alt.X('lineLabel:N', title='Numer Linii', sort='-y'),
         y=alt.Y('count:Q', title='Liczba Pojazdów'),
-        tooltip=[alt.Tooltip('lineId', title='Linia'), alt.Tooltip('count', title='Liczba pojazdów')]
+        tooltip=[alt.Tooltip('lineLabel', title='Linia'), alt.Tooltip('count', title='Liczba pojazdów')]
     ).properties(
         title='Aktualna liczba pojazdów na poszczególnych liniach'
-    )
+    ).interactive()
     st.altair_chart(chart, use_container_width=True)
     
     st.divider() 
 
-    st.header("Szczegółowa tabela pojazdów")
+    st.header("Pojazdy na linii")
 
-    filter_input = st.text_input("Filtruj po liniach (wpisz numery po przecinku, np. 6, 19, M1)")
+    filter_input = st.text_input("Filtruj po liniach (wpisz numery po przecinku, np. 41, 669, M1)")
 
     if filter_input:
         selected_lines = [line.strip() for line in filter_input.split(',')]
@@ -53,12 +53,19 @@ if vehicle_data:
     else:
         filtered_df = df
 
-    table_display_df = filtered_df[['trip', 'id']]
+    table_display_df = filtered_df[['trip', 'id']].copy()
+    table_display_df['id'] = table_display_df['id'].str.replace('_', '/')
+    table_display_df = table_display_df.rename(columns={'id': 'numer taborowy'})
+
+    table_display_df['brygada'] = table_display_df['trip'].str[:-2]
+    table_display_df['nr kursu'] = table_display_df['trip'].str.split('/').str[1]
+    
     table_display_df = table_display_df.sort_values(by='trip')
+    final_df_to_display = table_display_df[['brygada', 'nr kursu', 'numer taborowy']]
     
-    st.write(f"Znaleziono **{len(table_display_df)}** pojazdów.")
+    st.write(f"Znaleziono **{len(final_df_to_display)}** pojazdów.")
     
-    st.dataframe(table_display_df, use_container_width=True, hide_index=True)
+    st.dataframe(final_df_to_display, use_container_width=True, hide_index=True)
 
 else:
     st.warning("Nie udało się załadować danych o pojazdach. Spróbuj odświeżyć stronę za chwilę.")

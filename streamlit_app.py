@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import requests
 import altair as alt
+import pydeck as pdk
+
 
 st.set_page_config(page_title="Monitoring Pojazdów GZM", page_icon="🚍")
 
@@ -71,10 +73,39 @@ if vehicle_data:
         if filtered_df.empty:
             st.warning("Brak danych do wyświetlenia na mapie.")
         else:
-            map_df = filtered_df[['lat', 'lon', 'trip']].copy()
+            map_df = filtered_df[['lat', 'lon', 'trip', 'lineLabel']].copy()
             map_df['brygada'] = map_df['trip'].str[:-2]
-            
-            st.map(map_df, latitude='lat', longitude='lon', color='#0078ff', size=80)
+
+            view_state = pdk.ViewState(
+                latitude=map_df['lat'].mean(),
+                longitude=map_df['lon'].mean(),
+                zoom=12,
+                pitch=0
+            )
+
+            layer = pdk.Layer(
+                "ScatterplotLayer",
+                data=map_df,
+                get_position='[lon, lat]',
+                get_fill_color='[0, 120, 255, 180]', 
+                get_radius=80,
+                pickable=True
+            )
+
+            # tooltip po najechaniu myszką
+            tooltip = {
+                "html": "<b>Brygada:</b> {brygada}<br><b>Linia:</b> {lineLabel}",
+                "style": {"backgroundColor": "white", "color": "black"}
+            }
+
+            # utworzenie mapy
+            r = pdk.Deck(
+                layers=[layer],
+                initial_view_state=view_state,
+                tooltip=tooltip
+            )
+
+            st.pydeck_chart(r)
 
 else:
     st.warning("Nie udało się załadować danych o pojazdach. Spróbuj odświeżyć stronę za chwilę.")

@@ -29,7 +29,7 @@ if vehicle_data:
 
     st.header("Liczba pojazdów na linii")
 
-    line_counts = df['lineId'].value_counts().reset_index()
+    line_counts = df['lineLabel'].value_counts().reset_index()
     line_counts.columns = ['lineLabel', 'count']
 
     chart = alt.Chart(line_counts).mark_bar().encode(

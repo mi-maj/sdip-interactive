@@ -67,5 +67,14 @@ if vehicle_data:
     
     st.dataframe(final_df_to_display, use_container_width=True, hide_index=True)
 
+    if st.button("Pokaż na mapie"):
+        if filtered_df.empty:
+            st.warning("Brak danych do wyświetlenia na mapie.")
+        else:
+            map_df = filtered_df[['lat', 'lon', 'trip']].copy()
+            map_df['brygada'] = map_df['trip'].str[:-2]
+            
+            st.map(map_df, latitude='lat', longitude='lon', color='#0078ff', size=80)
+
 else:
     st.warning("Nie udało się załadować danych o pojazdach. Spróbuj odświeżyć stronę za chwilę.")
